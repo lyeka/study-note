@@ -461,6 +461,90 @@ db.inventory.find( { item : { $exists: false } } )
 
 
 
+### 更新
+
+填充实例数据
+
+```shell
+db.inventory.insertMany( [
+   { item: "canvas", qty: 100, size: { h: 28, w: 35.5, uom: "cm" }, status: "A" },
+   { item: "journal", qty: 25, size: { h: 14, w: 21, uom: "cm" }, status: "A" },
+   { item: "mat", qty: 85, size: { h: 27.9, w: 35.5, uom: "cm" }, status: "A" },
+   { item: "mousepad", qty: 25, size: { h: 19, w: 22.85, uom: "cm" }, status: "P" },
+   { item: "notebook", qty: 50, size: { h: 8.5, w: 11, uom: "in" }, status: "P" },
+   { item: "paper", qty: 100, size: { h: 8.5, w: 11, uom: "in" }, status: "D" },
+   { item: "planner", qty: 75, size: { h: 22.85, w: 30, uom: "cm" }, status: "D" },
+   { item: "postcard", qty: 45, size: { h: 10, w: 15.25, uom: "cm" }, status: "A" },
+   { item: "sketchbook", qty: 80, size: { h: 14, w: 21, uom: "cm" }, status: "A" },
+   { item: "sketch pad", qty: 95, size: { h: 22.85, w: 30.5, uom: "cm" }, status: "A" }
+] );
+```
+
+#### 更新单条文档
+
+` db.collection.updateOne()`更新第一条符合筛选条件的文档
+
+下列操作更新第一条item字段为paper的文档，使用$set操作符更新对应字段值， $currentDate操作符将lastModified字段更为当前日期，如果该字段不存在则创建
+
+```shell
+db.inventory.updateOne(
+   { item: "paper" },
+   {
+     $set: { "size.uom": "cm", status: "P" },
+     $currentDate: { lastModified: true }
+   }
+)
+```
+
+
+
+#### 更新多条文档
+
+` db.collection.updateMany()` 更新所有符合筛选条件的文档
+
+```shell
+db.inventory.updateMany(
+   { "qty": { $lt: 50 } },
+   {
+     $set: { "size.uom": "in", status: "P" },
+     $currentDate: { lastModified: true }
+   }
+)
+```
+
+
+
+#### 替换文档
+
+`db.collection.replaceOne()`替换文档内容，除了_id字段
+
+如果替换文档中包含`_id`字段,其必须与筛选文档的`_id`字段保持一致
+
+```shell
+db.inventory.replaceOne(
+   { item: "paper" },
+   { item: "paper", instock: [ { warehouse: "A", qty: 60 }, { warehouse: "B", qty: 40 } ] }
+)
+```
+
+
+
+
+
+#### 使用聚合管道更新
+
+todo
+
+
+
+#### 更新行为
+
+- 保证单条文档操作的原子性
+- 不可以更新`_id`字段/不可以替换`_id`不一致的文档
+- 保留写操作的字段顺序，除了`_id`字段以及使用字段名称更改操作
+- 使用`upsert: true`在没找到对应筛选文档时插入一条新文档
+- 指定写入操作确认级别 todo
+
 
 
 ## 安全配置
