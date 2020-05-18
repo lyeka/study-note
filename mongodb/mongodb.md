@@ -593,6 +593,170 @@ db.inventory.deleteOne( { status: "D" } )
 - 保证单条文档操作原子性
 - 确认级别可指定
 
+
+
+
+
+## 索引
+
+使用索引可以提高查询的效率。
+
+索引是以易于遍历的形式用来存储数据集的一小部分数据的数据结构，其存储一个或多个特定字段的值，按该字段的值排序。
+
+索引排序支持高效等值匹配以及范围查询操作，另外mongodb可以使用索引的排序返回排序好的结果。
+
+mongodb的索引为B-tree数据结构。
+
+
+
+默认的`_id`索引**
+
+mongo会自定为文档的`_id`字段加上索引，这一行为不可改变，且该索引还是唯一索引。
+
+
+
+创建索引**
+
+`db.collection.createIndex( <key and index type specification>, <options> )`
+
+```shell
+db.collection.createIndex( { name: -1 } )
+```
+
+
+
+索引名称**
+
+索引默认名称以字段名+排序方向和下划线串联如`{ item : 1, quantity: -1 }`的默认索引名为``item_1_quantity_-1``
+
+可以显示声明来指定索引名称
+
+```shell
+db.products.createIndex(
+  { item: 1, quantity: -1 } ,
+  { name: "query for inventory" }
+)
+```
+
+
+
+查看集合索引信息**
+
+`db.collection.getIndexes()`
+
+
+
+**索引类型**
+
+- 单字段索引
+- 复合索引
+- 多key索引
+- 地理空间索引
+- 文本索引
+- 哈希索引
+
+
+
+**索引属性分类**
+
+**唯一索引**
+
+字段值唯一
+
+**部分索引**
+
+只对符合指定过滤条件的的文档建立索引
+
+**稀疏索引**
+
+跳过没有索引字段的文档
+
+**TTL索引**
+
+具有生命周期，到期会自动删除文档的索引
+
+
+
+**分析索引**
+
+[todo](https://docs.mongodb.com/manual/tutorial/analyze-query-plan/)
+
+
+
+**索引和排序规则**
+
+[todo]
+
+
+
+**覆盖查询**
+
+如果查询条件和返回文档字段仅包含索引字段，mongo可以无需扫描原文档以及在内存中处理二直接返回结果，极大提高查询效率
+
+
+
+**索引交集**
+
+对于复合查询条件的查询，如果查询条件分别处于不同的索引之中，mongo可以使用索引交集来满足查询
+
+
+
+**索引限制**
+
+[todo]
+
+
+
+**其他注意事项**
+
+[todo]
+
+### 单字段索引
+
+![单字段索引存储图示](https://docs.mongodb.com/manual/_images/index-ascending.bakedsvg.svg)
+
+对于单字段来说，索引的排序方向并不重要，因为mongo支持两端遍历索引
+
+
+
+### 复合索引
+
+![](https://docs.mongodb.com/manual/_images/index-compound-key.bakedsvg.svg)
+
+
+
+对于复合字段，字段的顺序具有重要意义。mongo会按照字段的顺序作优先级来排序索引。
+
+对于复合索引和排序操作，索引键的排序方向可以确定索引是否可以支持排序操作[todo](https://docs.mongodb.com/manual/core/index-compound/#index-ascending-and-descending)
+
+
+
+### 多key索引
+
+![](https://docs.mongodb.com/manual/_images/index-multikey.bakedsvg.svg)
+
+如果索引字段存储的是数组，mongo会确定字段为多key索引，为数组的每个元素创建单独的索引条目
+
+
+
+### 地理空间索引
+
+[todo]
+
+
+
+###  文本索引
+
+支持在文档中搜索字符串内容
+
+[todo]
+
+
+
+### 哈希索引
+
+[todo]
+
 ## 安全配置
 
 
