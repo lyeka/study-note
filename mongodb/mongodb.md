@@ -609,13 +609,13 @@ mongodb的索引为B-tree数据结构。
 
 
 
-默认的`_id`索引**
+**默认的`_id`索引**
 
 mongo会自定为文档的`_id`字段加上索引，这一行为不可改变，且该索引还是唯一索引。
 
 
 
-创建索引**
+**创建索引**
 
 `db.collection.createIndex( <key and index type specification>, <options> )`
 
@@ -623,9 +623,11 @@ mongo会自定为文档的`_id`字段加上索引，这一行为不可改变，�
 db.collection.createIndex( { name: -1 } )
 ```
 
+对于已经存在的索引，创建多次保证幂等性，即使使用别的名称，也无法创建，保留原名称，故索引改名只可以先删除再创建。
 
 
-索引名称**
+
+**索引名称**
 
 索引默认名称以字段名+排序方向和下划线串联如`{ item : 1, quantity: -1 }`的默认索引名为``item_1_quantity_-1``
 
@@ -640,7 +642,7 @@ db.products.createIndex(
 
 
 
-查看集合索引信息**
+**查看集合索引信息**
 
 `db.collection.getIndexes()`
 
