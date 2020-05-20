@@ -28,7 +28,7 @@ func main() {
 }
 ```
 
-程序每次输出的结果都会因为并发读写该变量而不一样。如果你不能完全理解该例子，笔者建议你先去阅读 [[Introducing the Go Race Detector](https://blog.golang.org/race-detector)] 。
+程序每次输出的结果都会因为并发读写该变量而不一样。如果你不能完全理解该例子，建议先去阅读 [Introducing the Go Race Detector](https://blog.golang.org/race-detector) 。
 
 ## 竞态检测功能
 
@@ -157,4 +157,4 @@ TEXT   runtime·raceread(SB), NOSPLIT, $0-8
 
 在第一个例子中， `raceread` 和 `racewrite` 方法取得了 `foo` 变量的内存地址读写权限以检测是否有数据竞争发生。
 
-如果想更深入地了解 ThreadSanitizer， 可以去阅读 [Kavya Joshi](http://kavya joshi channels/) 的 “[Looking Inside a Race Detector](https://www.infoq.com/presentations/go-race-detector/)” 。
+如果想更深入地了解 ThreadSanitizer， 可以去阅读 [Kavya Joshi](http://kavya joshi channels/)  的 “[Looking Inside a Race Detector](https://www.infoq.com/presentations/go-race-detector/)” 。
