@@ -32,7 +32,7 @@ func main() {
 
 ## 竞态检测功能
 
-为了更改地理解 Go 内部如何管理竞态检测， 我们先使用 `go tool compile -S -race main.go` 命令来生成  [asm](https://golang.org/doc/asm) 。下面是与 `foo++` 操作相关的输出摘录
+为了更改地理解 Go 内部如何管理竞态检测， 我们先使用 `go tool compile -S -race main.go` 命令来生成  [asm](https://golang.org/doc/asm) 。下面是与 `foo++` 操作相关的输出摘录：
 
 ```bash
 (main.go:14)   CALL   runtime.raceread(SB)
@@ -50,7 +50,7 @@ func main() {
 
 Go 在 `runtime` 包提供了两份与竞态检测相关的文件：`race.go` 和 `race0.go` ：
 
-- `race.go` 设置 `raceenable` 常量为 1 以及包含了与竞态检测相关的方法：
+- `race.go` 设置 `raceenable` 常量为 true 以及提供与竞态检测相关的方法：
 
 ```go
 package runtime
@@ -78,7 +78,7 @@ func raceacquireg(gp *g, addr unsafe.Pointer) { throw("race") }
 
 当程序不应该使用竞态检测时，将会抛出错误来中止竞态检测。
 
-`raceenable` 常量将会在 Go 库 主要是 `runtime` 包中使用，用在程序运行时添特定用于竞态检测的检查点。
+`raceenable` 常量将会在 Go 库 主要是 `runtime` 包中使用，用在程序运行时添加特定用于竞态检测的检查点。
 
 
 
@@ -97,13 +97,13 @@ func LinkerDeps(p *Package) []string {
 }
 ```
 
-如我们所见， `-race` 标志反映在内部配置 `cfg` 中。
+如我们所见， `-race` 标志映射到内部配置 `cfg` 中。
 
 
 
 ## 数据竞态检测标志
 
-Go 在`cfg` 包中保留了内部配置用于映射所有的标志。 下面是配置实例：
+Go 在`cfg` 包中保留了内部配置用于映射所有的标志。 下面是配置示例：
 
 ```go
 package cfg
@@ -117,7 +117,7 @@ var (
     [...]
 ```
 
-使用数据竞态标志 `-race` 将会更新此内部配置：
+使用数据竞态标志 `-race` 将会[更新此内部配置](https://github.com/golang/go/blob/release-branch.go1.12/src/cmd/go/internal/work/build.go#L228)：
 
 ```go
 build.go
@@ -133,8 +133,6 @@ func AddBuildFlags(cmd *base.Command) {
 如果想排除不想用于竞态检测的文件，可以使用 `// +build !race` 标签(注释)。
 
 在对数据竞态检测器内部的工作流程有了更好的了解后，让我们回到最初，理解这些方法如何工作。
-
-
 
 ## ThreadSanitizer
 
@@ -155,6 +153,19 @@ TEXT   runtime·raceread(SB), NOSPLIT, $0-8
 
 > 使用 *ThreadSanitizer* 会使运行速度下降约5到15倍，内存开销增加约5到10倍。
 
-在第一个例子中， `raceread` 和 `racewrite` 方法取得了 `foo` 变量的内存地址读写权限以检测是否有数据竞争发生。
+在第一个例子中， `raceread` 和 `racewrite` 方法取得了 `foo` 变量的内存地址读写权限以检测是否有潜在的数据竞争发生。
 
-如果想更深入地了解 ThreadSanitizer， 可以去阅读 [Kavya Joshi](http://kavya joshi channels/)  的 “[Looking Inside a Race Detector](https://www.infoq.com/presentations/go-race-detector/)” 。
+如果想更深入地了解 ThreadSanitizer ， 可以去阅读 [Kavya Joshi](http://kavya joshi channels/)  的 “[Looking Inside a Race Detector](https://www.infoq.com/presentations/go-race-detector/)” 。
+
+
+
+```
+---
+via: https://medium.com/a-journey-with-go/go-race-detector-with-threadsanitizer-8e497f9e42db
+
+作者：[Vincent Blanchon](https://medium.com/@blanchon.vincent)
+译者：[译者ID](https://github.com/译者ID)
+校对：[校对者ID](https://github.com/校对者ID)
+
+本文由 [GCTT](https://github.com/studygolang/GCTT) 原创编译，[Go 中文网](https://studygolang.com/) 荣誉推出
+```
