@@ -322,7 +322,7 @@ func TrimSpace(s []byte) []byte {
 
 上图为Go包初始化流程。一个包内可以有多个`init`函数， `init`函数在同一份文件的话，按顺序执行，不同文件相同包内的`init`函数执行顺序未定义（可能按文件名顺序）。
 
-Go程序的初始化和执行从main包的main函数开始，在其执行之前所有代码都在同一个`goroutine`，也就是程序的主系统线程，因此，某个`init`函数内启动新`goroutine`话，新的`goroutine`要在进入`main.main`函数后才能执行到。
+
 
 
 
@@ -510,3 +510,158 @@ var (
 ```
 
 [todo]
+
+
+
+
+
+## 面向并发的内存模型
+
+### Goroutine 与系统线程
+
+系统线程一般会有一个固定大小的栈（一般默认 2 MB）， 用来保存函数递归调用时的参数和局部变量。
+
+固定大小的栈存在两个问题：
+
+- 对于栈空间需求小的线程来说浪费资源
+- 对于栈空间需求大的线程面临栈移溢出的风险
+
+
+
+Goroutine 是 Go 特有的并发体，其栈空间的大小是动态的，启动时候会很小（2/4 MB），当遇到深度递归导致栈空间不足时，会动态伸缩栈的大小（主流实现上限是 1 GB）。
+
+Go 还实现了自己的调度器，其工作与内核的调度是类似的，不过只关注 Go 程序的 Goroutine。Go 调度器可以在 n 个操作系统线程上多工调度  m 个 Goroutine。 Goroutine 采用半抢占式协作调度，只有在当前 Goroutine 发生阻塞时才导致调度；同时发生在用户态，会根据具体函数只保存必要的寄存器，切换的代价比系统线程低得多。
+
+运行时有一个`runtime.GOMAXPROCS`变量，用于控制当前运行正常非阻塞Goroutine的系统线程数目。
+
+
+
+### 原子操作
+
+原子操作即“最小且不可并行化的”操作。在多线程并发情景下用于保证共享资源的完整性。
+
+一般情况下，原子操作都是通过“互斥”访问来保证的，通常由特殊的 CPU 指令提供保护。
+
+Go 标准库 `sync/atomic` 包对原子操作提供了丰富的支持
+
+```go
+import (
+    "sync"
+    "sync/atomic"
+)
+
+var total uint64
+
+func worker(wg *sync.WaitGroup) {
+    defer wg.Done()
+
+    var i uint64
+    for i = 0; i <= 100; i++ {
+        atomic.AddUint64(&total, i)
+    }
+}
+
+func main() {
+    var wg sync.WaitGroup
+    wg.Add(2)
+
+    go worker(&wg)
+    go worker(&wg)
+    wg.Wait()
+}
+```
+
+`sync/atomic` 包除了对除了基本的数值类型支持原子操作外，还通过 `atomic.Value` 对任意自定义复杂类型提供 `Load` 和 `Store` 两个原子方法。
+
+标准库 `sync.Once` 实现
+
+```go
+type Once struct {
+	done uint32
+	m    Mutex
+}
+
+func (o *Once) Do(f func()) {
+    if atomic.LoadUint32(&o.done) == 0 {
+        // Outlined slow-path to allow inlining of the fast-path.
+        o.doSlow(f)
+    }
+}
+
+func (o *Once) doSlow(f func()) {
+    o.m.Lock()
+    defer o.m.Unlock()
+    if o.done == 0 {
+        defer atomic.StoreUint32(&o.done, 1)
+        f()
+    }
+}
+```
+
+利用  `sync.Once` 实现单例模式
+
+```go
+var (
+    instance *singleton
+    once     sync.Once
+)
+
+func Instance() *singleton {
+    once.Do(func() {
+        instance = &singleton{}
+    })
+    return instance
+}
+```
+
+
+
+### 顺序一致性内存模型
+
+Go 语言中，在同一个 Goroutine 内， 顺序一致性内存模型是得到保证的。但是不同的 Goroutine 之间，并不满足顺序一致性内存模型，需要通过明确定义的同步事件来作为同步的参考。如果两个事件不可排序，那么就说这两个事件是并发的。为了最大并行化， Go 语言的编译器和处理器在不影响上述规定的前提下会对执行语句重新排序（CPU 也会对一些指令乱序执行）。
+
+关于这个可以阅读 [The Go Memory Model](https://golang.org/ref/mem)
+
+
+
+通过 channel 机制来明确排序以同步
+
+```go
+func main() {
+    done := make(chan int)
+
+    go func(){
+        println("你好, 世界")
+        done <- 1
+    }()
+
+    <-done
+}
+```
+
+通过 `sync.Mutex` 互斥量来实现同步
+
+```go
+func main() {
+    var mu sync.Mutex
+
+    mu.Lock()
+    go func(){
+        println("你好, 世界")
+        mu.Unlock()
+    }()
+
+    mu.Lock()
+}
+```
+
+### 基于 Channel 的通信
+
+Channel 通信是在 Goroutine 之间进行同步的主要方法。
+
+无缓存的 Channel 上的发送操作总在对应的接收操作完成之前发生。
+
+对于有缓冲的 Channel， 该 Channel 的第 K 个接收完成发生在第 `K+C` 个发送操作完成之前，其中 C 是 Channel的缓冲大小。
+
+使用 `Close` 关闭 channel ，接受者会收到该 channel 返回的零值。
+

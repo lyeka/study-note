@@ -1,0 +1,22 @@
+# The Go Memory Model
+
+原文出处：https://golang.org/ref/mem
+
+参考译文：https://www.pengrl.com/p/34119/
+
+## Happens Before
+
+在单个 goroutine 内， 读写顺序必须和其在程序中定义的执行顺序一致，也就是说，编译器和处理器只会在不会改变语言规范（代码）定义该 goroutine 中的行为的时候才会对单个 goroutine 中执行的读写操作进行重新排序。
+
+因为重新排序，一个 goroutine 内观察到的执行顺序可能不同于另外 goroutine 中所观察到的。
+
+例如，如果一个 goroutine 执行 `a = 1; b = 2;`,  其他 goroutine 可能观察到 b 的更新发生在 a 的更新之前。
+
+
+
+为了定义读写需求， 我们定义了 `happens before`—— Go 语言中的内存操作的偏序。如果事件 e1 在事件 e2 之前发生（ `happens before`）， 我们可以说 e2 发生在 e1 之后。同样， 如果 e1 不在 e2 之前发生（not `happens before`），我们可以说 e1 和 e2 并行发生。
+
+
+
+在单个 goroutine 内， `happen berfore` 顺序和程序中表达的顺序一致。
+

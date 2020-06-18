@@ -28,7 +28,7 @@ func main() {
 }
 ```
 
-程序每次输出的结果都会因为并发读写该变量而不一样。如果你不能完全理解该例子，建议先去阅读 [Introducing the Go Race Detector](https://blog.golang.org/race-detector) 。
+程序每次输出的结果都会因为并发读写该变量而不一样。如果你不能完全理解该例子，建议先去阅读 [Introducing the Go Race Detector](https://blog.golang.org/race-detector)。
 
 ## 竞态检测功能
 
@@ -44,7 +44,7 @@ func main() {
 (main.go:22)   CALL   runtime.racefuncexit(SB)
 ```
 
-因为 `foo++` 操作等同于 `foo = foo + 1` ，Go 必须在改变其值前先读取该变量。Go 在读写该变量期间添加了两个函数用于观察该变量上是否存在竞态。我们到 `runtime` 包查看下这些函数是什么。
+因为 `foo++` 指令等同于 `foo = foo + 1` ，Go 必须在改变其值前先读取该变量。Go 在读写该变量期间添加了两个函数用于观察该变量上是否存在竞态。我们到 `runtime` 包查看下这些函数是什么。
 
 ## 竞态检测包
 
@@ -62,8 +62,6 @@ func racewrite(uintptr)
 [...]
 ```
 
-
-
 - `race0.go` 设置 `receenable` 常量为 false 并且提供了相同的方法，但是函数体不同，会抛出错误。
 
 ```go
@@ -79,8 +77,6 @@ func raceacquireg(gp *g, addr unsafe.Pointer) { throw("race") }
 当程序不应该使用竞态检测时，将会抛出错误来中止竞态检测。
 
 `raceenable` 常量将会在 Go 库 主要是 `runtime` 包中使用，用在程序运行时添加特定用于竞态检测的检查点。
-
-
 
 是否导入 `runtime/race` 包在 `load` 包中的 `internal/load/pkg.go` 中决定
 
@@ -98,8 +94,6 @@ func LinkerDeps(p *Package) []string {
 ```
 
 如我们所见， `-race` 标志映射到内部配置 `cfg` 中。
-
-
 
 ## 数据竞态检测标志
 
@@ -157,15 +151,11 @@ TEXT   runtime·raceread(SB), NOSPLIT, $0-8
 
 如果想更深入地了解 ThreadSanitizer ， 可以去阅读 [Kavya Joshi](http://kavya joshi channels/)  的 “[Looking Inside a Race Detector](https://www.infoq.com/presentations/go-race-detector/)” 。
 
-
-
-```
 ---
 via: https://medium.com/a-journey-with-go/go-race-detector-with-threadsanitizer-8e497f9e42db
 
 作者：[Vincent Blanchon](https://medium.com/@blanchon.vincent)
-译者：[译者ID](https://github.com/译者ID)
+译者：[lyeka](https://github.com/lyeka)
 校对：[校对者ID](https://github.com/校对者ID)
 
 本文由 [GCTT](https://github.com/studygolang/GCTT) 原创编译，[Go 中文网](https://studygolang.com/) 荣誉推出
-```
