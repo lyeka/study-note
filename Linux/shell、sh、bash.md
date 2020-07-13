@@ -25,3 +25,11 @@ sh(/bin/sh)是最早的Shell，Bash(/bin/bash)是sh的的扩展，兼容sh，但
 在一般情况下，人们并不区分 sh 和 Bash，所以，像 `#!/bin/sh`，它同样也可以改为 `#!/bin/bash`。
 
 `#!` 告诉系统其后路径所指定的程序即是解释此脚本文件的 Shell 程序。
+
+
+
+ref
+
+- http://c.biancheng.net/view/706.html
+- http://c.biancheng.net/view/733.html
+- https://www.runoob.com/linux/linux-shell.html
