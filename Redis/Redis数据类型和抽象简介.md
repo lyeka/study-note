@@ -51,7 +51,120 @@ OK
 
 值可以是可以任何类型的字符串（包括二进制数据），例如你可以存储jpeg格式照片作为值。值的大小不可以超过512MB。
 
+SET命令通过额外的参数提供一些有趣的选项。例如，可以要求如何设置的键值已经存在的话，SET操作失败，或者相反，要求Set操作只在键只存在的情况下才成功
 
+```shell
+> set mykey newval nx
+(nil)
+> set mykey newcal xx
+OK
+```
+
+
+
+即使字符串是redis最基本的值，其仍有许多有趣的操作。例如，其中之一便是原子增加。
+
+```shell
+> set counter 100
+OK
+> incr counter
+(integer) 101
+> incr counter 
+(integer) 102
+> incrby counter 50
+(integer) 152
+```
+
+INCR命令解析字符串值为整数，将其加一，并将加一后的值存储。还有一些相似的命令如 INCRBY，DECR、DECRBY。这些命令内在是同一个操作，不过以不同的方式表现。
+
+INCR 命令是原子操作。即使同时有不同的客户端对同一个键值执行INCR操作也不会出现数据竞争。例如，将永远不会出现客户端1和客户端2在同一时间（执行INCR操作）读取值为10，将其增加1到11，以及最终存储为11的情况。如果没有当其他客户端也在这时对该执行INCR操作的话，该值最终的值将会为12。
+
+字符串有大量的相关命令。例如，GETSET命令在更新值的同时返回旧值。例子略
+
+批量设置或者取回多个键的值操作在减少时延方面很有效。因此衍生出MSET和MEGT命令：
+
+```shell
+> mset a 10 b 20 c 30
+OK
+> mget a b c
+1)  "10"
+2) "20"
+3) "30"
+```
+
+MGET 会以数组的方式返回值
+
+
+
+### Altering and querying the key space
+
+有一些命令没有限定于某种数据类型。但在检索键的空间方面有用，所以这些命令适用于任何类型
+
+如EXISTS命令将根据键的存在与否返回1或0，DEL命令删除一个键与其值，无论值是什么。
+
+```shell
+> set mykey hello
+OK
+> exists mykey
+(integer) 1
+> del mykey
+(integer) 0
+> exists mykey
+(integer) 0
+```
+
+DEL根据删除的键存在与否返回1或0。
+
+有许多与键空间相关的命令，但是上述两个以及TYPE命令是最重要的。TYPE命令返回值的类型。
+
+```shell
+> set mykey x
+OK
+> type mykey
+string
+> del mykey
+(integer) 1
+> type mykey
+none
+```
+
+
+
+### Redis 过期机制： 带有限生存时间的键
+
+在深入其他复杂的数据结构之前，我们需要讨论下另外一个与类型无关的特性——redis过期机制。基本上你就可以为键设置一个超时时间，用于限定键的生存时间，当生存时间达到之后，键将会自动销毁，就如同用户调用了DEL命令一样。
+
+关于redis过期机制的一些快速概览
+
+- 时间精度可以是秒或者毫秒
+- 但是， 到期时间的分辨率始终为1毫秒
+- 关于过期的信息被复制并保留在磁盘上，即使redis关机了生存时间也在继续消耗（这意味着redis保存的是键的实际到期时间点）
+
+设置过期时间很简单
+
+```shell
+> set key some-value
+OK
+> expire key 5
+(integer) 1
+> get key (immediately)
+"some value"
+> get key (after some time)
+(nil)
+```
+
+键在两次get调用之间消失了，因为两次调用的时间差超过了5秒。在上诉例子中，我们使用EXPIRE设置过期时间（同样可以为已经有过期时间的键设置不同的过期机制，像PERSIST命令将会移除键的过期时间），然而我们同样可以使用别的命令设置过期时间，例如在GET中使用额外的参数
+
+```shell
+> set key 100 ex 10
+OK
+> ttl key
+(integer) 9
+```
+
+上述例子将键的值设置为100，生存时间为10秒。后面的TTL命令用于查看键的剩余生成时间。
+
+如果想设置或者查看毫秒精度的生存时间，使用PEXPIRE和PTTL命令，以及SET的其余选项。
 
 
 
