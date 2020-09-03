@@ -60,3 +60,8 @@ redis `keys`指令可以用于查找符合满足给定正则字符串规则的ke
 1. 脚本使用`scan`，计算key对应的size或者len， 将排名靠前的展示出来
 2. 使用官方指令——`redis-cli  –-bigkeys`
 
+
+
+ref
+
+- https://juejin.im/book/6844733724618129422/section/6844733724710404110
